@@ -35,7 +35,7 @@ module.exports = {
     // js
     'block-spacing': ['error', 'always'],
     camelcase: [
-      'error',
+      'off',
       {
         properties: 'never',
         ignoreDestructuring: true
@@ -149,7 +149,6 @@ module.exports = {
     'import/named': 'error',
     'import/no-mutable-exports': 'error',
     'import/no-duplicates': ['error', { considerQueryString: true }],
-    'import/group-exports': 'error',
 
 
     // TypeScript
@@ -395,9 +394,7 @@ module.exports = {
       { blankLine: 'always', prev: '*', next: 'iife' },
       { blankLine: 'always', prev: 'iife', next: '*' },
       { blankLine: 'always', prev: '*', next: 'interface' },
-      { blankLine: 'always', prev: 'interface', next: '*' },
-      { blankLine: 'always', prev: '*', next: 'type' },
-      { blankLine: 'always', prev: 'type', next: '*' }
+      { blankLine: 'always', prev: 'interface', next: '*' }
     ],
     '@typescript-eslint/prefer-as-const': 'error',
     '@typescript-eslint/prefer-for-of': 'error',
