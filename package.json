@@ -1,0 +1,29 @@
+{
+  "name": "@aelita/lune",
+  "version": "0.0.1",
+  "description": "A re-written copy of zod, for learning purpose",
+  "author": "Aelita",
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf lib/* && pnpm build:cjs && pnpm build:esm",
+    "build:esm": "rollup --config rollup.config.ts",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:types": "tsc -p tsconfig.types.json",
+    "play": "tsx watch playground.ts",
+    "lint": "eslint --ext .ts ./src",
+    "lint:fix": "eslint --fix --ext .ts ./src"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.1",
+    "@types/node": "^18.16.18",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
+    "eslint": "^8.43.0",
+    "eslint-import-resolver-node": "^0.3.7",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-import": "^2.27.5",
+    "rollup": "^3.25.1",
+    "tslib": "^2.5.3",
+    "typescript": "^5.1.3"
+  }
+}
