@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "lib": ["ESNext", "DOM"],
+    "resolveJsonModule": true
+  },
+  "include": [
+    "rollup.config.ts"
+  ]
+}

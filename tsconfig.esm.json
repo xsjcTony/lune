@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "es2015",
+    "outDir": "./lib/esm",
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "removeComments": true
+  },
+  "exclude": [
+    "playground.ts"
+  ]
+}
