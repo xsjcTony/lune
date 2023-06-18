@@ -42,25 +42,25 @@ import type { LuneTypeDefinition, RawCreateParams } from './base'
 export type IpVersion = 'v4' | 'v6'
 
 export type LuneStringCheck =
-  | { kind: 'cuid'; message?: string }
-  | { kind: 'cuid2'; message?: string }
-  | { kind: 'datetime'; offset: boolean; precision: number | null; message?: string }
-  | { kind: 'email'; message?: string }
-  | { kind: 'emoji'; message?: string }
-  | { kind: 'endsWith'; value: string; message?: string }
-  | { kind: 'includes'; value: string; position?: number; message?: string }
-  | { kind: 'ip'; version?: IpVersion; message?: string }
-  | { kind: 'length'; value: number; message?: string }
-  | { kind: 'max'; value: number; message?: string }
   | { kind: 'min'; value: number; message?: string }
-  | { kind: 'regex'; regex: RegExp; message?: string }
+  | { kind: 'max'; value: number; message?: string }
+  | { kind: 'length'; value: number; message?: string }
+  | { kind: 'email'; message?: string }
+  | { kind: 'url'; message?: string }
+  | { kind: 'emoji'; message?: string }
+  | { kind: 'uuid'; message?: string }
+  | { kind: 'cuid'; message?: string }
+  | { kind: 'includes'; value: string; position?: number; message?: string }
+  | { kind: 'cuid2'; message?: string }
+  | { kind: 'ulid'; message?: string }
   | { kind: 'startsWith'; value: string; message?: string }
+  | { kind: 'endsWith'; value: string; message?: string }
+  | { kind: 'regex'; regex: RegExp; message?: string }
+  | { kind: 'trim'; message?: string }
   | { kind: 'toLowerCase'; message?: string }
   | { kind: 'toUpperCase'; message?: string }
-  | { kind: 'trim'; message?: string }
-  | { kind: 'ulid'; message?: string }
-  | { kind: 'url'; message?: string }
-  | { kind: 'uuid'; message?: string }
+  | { kind: 'datetime'; offset: boolean; precision: number | null; message?: string }
+  | { kind: 'ip'; version?: IpVersion; message?: string }
 
 
 export interface LuneStringDefinition extends LuneTypeDefinition {

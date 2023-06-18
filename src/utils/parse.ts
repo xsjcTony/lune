@@ -1,5 +1,5 @@
 export interface ParseParams {
-  path: (number | string)[]
+  path: (string | number)[]
   errorMap: unknown // TODO: implement LuneErrorMap
   async: boolean
 }

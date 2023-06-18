@@ -45,10 +45,50 @@ export interface LuneTypeDefinition {
 }
 
 
+// type utilities
+export type LuneTypeAny = LuneType
+export type TypeOf<T extends LuneTypeAny> = T['_output']
+export type { TypeOf as Infer }
+export type Input<T extends LuneTypeAny> = T['_input']
+export type Output<T extends LuneTypeAny> = TypeOf<T>
+
+
+// create params
+export interface RawCreateParams {
+  errorMap?: unknown // TODO: implement
+  invalid_type_error?: string
+  required_error?: string
+  description?: string
+}
+
+export type ProcessedCreateParams = LuneTypeDefinition
+
+export const processCreateParams = (params: RawCreateParams | undefined): ProcessedCreateParams => {
+  if (!params) return {}
+
+  const {
+    errorMap,
+    invalid_type_error,
+    required_error,
+    description
+  } = params
+
+  if (errorMap && (invalid_type_error || required_error)) {
+    throw new Error('You cannot use both "errorMap" and "invalid_type_error" or "required_error"')
+  }
+
+  if (errorMap) {
+    return { errorMap, description }
+  }
+
+  // TODO: implement custom error map based on type error given
+}
+
+
 export abstract class LuneType<Output = any, Definition extends LuneTypeDefinition = LuneTypeDefinition, Input = Output> {
-  // `#output` and `#input` are defined for TS usage only
-  readonly #output!: Output
-  readonly #input!: Input
+  // `_output` and `_input` are defined for TS usage only
+  private readonly _output!: Output
+  private readonly _input!: Input
 
   readonly #definition: Definition
 
@@ -170,34 +210,3 @@ export const LuneFirstPartyTypeKind = {
   LuneBranded: 'LuneBranded',
   LunePipeline: 'LunePipeline'
 } as const
-
-
-export interface RawCreateParams {
-  errorMap?: unknown // TODO: implement
-  invalid_type_error?: string
-  required_error?: string
-  description?: string
-}
-
-export type ProcessedCreateParams = LuneTypeDefinition
-
-export const processCreateParams = (params: RawCreateParams | undefined): ProcessedCreateParams => {
-  if (!params) return {}
-
-  const {
-    errorMap,
-    invalid_type_error,
-    required_error,
-    description
-  } = params
-
-  if (errorMap && (invalid_type_error || required_error)) {
-    throw new Error('You cannot use both "errorMap" and "invalid_type_error" or "required_error"')
-  }
-
-  if (errorMap) {
-    return { errorMap, description }
-  }
-
-  // TODO: implement custom error map based on type error given
-}

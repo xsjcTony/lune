@@ -75,7 +75,6 @@ module.exports = {
     'one-var': ['error', 'never'],
     'no-plusplus': ['error', { allowForLoopAfterthoughts: true }],
     'no-unexpected-multiline': 'error',
-    'space-before-blocks': ['error', 'always'],
     'prefer-const': ['error', { destructuring: 'all' }],
     'no-const-assign': 'error',
     'no-var': 'error',
@@ -450,27 +449,6 @@ module.exports = {
     ],
     '@typescript-eslint/return-await': ['error', 'in-try-catch'],
     '@typescript-eslint/semi': ['error', 'never'],
-    '@typescript-eslint/sort-type-union-intersection-members': [
-      'error',
-      {
-        checkIntersections: true,
-        checkUnions: true,
-        groupOrder: [
-          'named',
-          'keyword',
-          'operator',
-          'literal',
-          'function',
-          'import',
-          'conditional',
-          'object',
-          'tuple',
-          'intersection',
-          'union',
-          'nullish'
-        ]
-      }
-    ],
     '@typescript-eslint/space-before-function-paren': [
       'error',
       {
@@ -516,6 +494,7 @@ module.exports = {
         prefer: 'type-imports',
         fixStyle: 'separate-type-imports'
       }
-    ]
+    ],
+    '@typescript-eslint/space-before-blocks': ['error', 'always']
   }
 }
