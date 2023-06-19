@@ -1,6 +1,7 @@
 import { arrayToEnum } from '../utils'
 import type { LuneTypeAny, TypeOf } from '../types'
 import type { LuneParsedType } from '../utils'
+import type { ParsePath } from '../utils/parse'
 import type { OmitStrings, Primitive } from '../utils/types'
 
 
@@ -66,7 +67,7 @@ export type LuneIssueCode = keyof typeof LuneIssueCode
 
 
 export interface LuneIssueBase {
-  path: (string | number)[]
+  path: ParsePath
   message?: string
 }
 
@@ -203,7 +204,7 @@ export type LuneIssueBaseData =
   | LuneCustomIssue
 
 
-type LuneIssue = LuneIssueBaseData & {
+export type LuneIssue = LuneIssueBaseData & {
   fatal?: boolean
   message: string
 }
@@ -333,7 +334,7 @@ type OmitPath<T extends object> = OmitStrings<T, 'path'>
 
 
 export interface LuneIssueData extends OmitPath<LuneIssueBaseData> {
-  path?: (string | number)[]
+  path?: ParsePath
   fatal?: boolean
 }
 

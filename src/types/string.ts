@@ -1,4 +1,4 @@
-import { LuneType, LuneFirstPartyTypeKind } from './base'
+import { LuneType, LuneFirstPartyTypeKind, processCreateParams } from './base'
 import type { LuneTypeDefinition, RawCreateParams } from './base'
 
 
@@ -80,3 +80,9 @@ export class LuneString extends LuneType<string, LuneStringDefinition> {
     })
   }
 }
+
+
+const stringCreate = LuneString.create
+
+
+export { stringCreate as string }

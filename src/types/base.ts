@@ -1,4 +1,7 @@
-import type { ParseParams } from '../utils/parse'
+import { LuneIssueCode } from '../error'
+import { getParsedType, LuneParsedType } from '../utils'
+import type { LuneErrorMap } from '../error'
+import type { ParseInput, ParseParams, ParseReturnType } from '../utils/parse'
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -81,14 +84,30 @@ export const processCreateParams = (params: RawCreateParams | undefined): Proces
     return { errorMap, description }
   }
 
-  // TODO: implement custom error map based on type error given
+  const customErrorMap: LuneErrorMap = (issue, { defaultError }) => {
+    let message = defaultError
+
+    if (issue.code !== LuneIssueCode.invalid_type) {
+      return { message }
+    }
+
+    if (issue.received === LuneParsedType.undefined) {
+      message = required_error ?? message
+    } else {
+      message = invalid_type_error ?? message
+    }
+
+    return { message }
+  }
+
+  return { errorMap: customErrorMap, description }
 }
 
 
 export abstract class LuneType<Output = any, Definition extends LuneTypeDefinition = LuneTypeDefinition, Input = Output> {
   // `_output` and `_input` are defined for TS usage only
-  private readonly _output!: Output
-  private readonly _input!: Input
+  public readonly _output!: Output
+  public readonly _input!: Input
 
   readonly #definition: Definition
 
@@ -103,9 +122,11 @@ export abstract class LuneType<Output = any, Definition extends LuneTypeDefiniti
     return this.#definition.description
   }
 
-  // TODO: _parse()
+  protected abstract _parse(input: ParseInput): ParseReturnType<Output>
 
-  // TODO: _getType()
+  protected _getType(input: ParseInput): string {
+    return getParsedType(input.data)
+  }
 
   // TODO: _getOrReturnCtx()
 
