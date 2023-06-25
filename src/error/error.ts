@@ -1,6 +1,6 @@
-import { arrayToEnum, Distributive, DistributiveOmitStrings } from '../utils'
+import { arrayToEnum } from '../utils'
 import type { LuneTypeAny, TypeOf } from '../types'
-import type { LuneParsedType, ParsePath, OmitStrings, Primitive } from '../utils'
+import type { LuneParsedType, ParsePath, Primitive, DistributiveOmitStrings } from '../utils'
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -292,9 +292,19 @@ export class LuneError<T = any> extends Error {
               break
             }
 
-            issue.path.reduce((prev, curr, index) => {
-              // TODO: implement
-            }, fieldErrors)
+            issue.path.reduce(
+              (prev, curr, index, path) => {
+                if (index !== path.length - 1) {
+                  prev[curr] = prev[curr] ?? { _errors: [] }
+                } else {
+                  prev[curr] = prev[curr] ?? []
+                  prev[curr]._errors.push(mapper(issue))
+                }
+
+                return prev[curr]
+              },
+              fieldErrors as any // TODO: .... chaos
+            )
         }
       }
     }

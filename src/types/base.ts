@@ -126,6 +126,10 @@ export abstract class LuneType<
   protected constructor(definition: Definition) {
     this._definition = definition
 
+    this.parse = this.parse.bind(this)
+    this.safeParse = this.safeParse.bind(this)
+    this.parseAsync = this.parseAsync.bind(this)
+    this.safeParseAsync = this.safeParseAsync.bind(this)
     this.spa = this.safeParseAsync.bind(this)
   }
 
