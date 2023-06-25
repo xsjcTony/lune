@@ -1,5 +1,7 @@
+import { getErrorMap, makeIssue, LuneError } from '../error'
+import { defaultErrorMap } from '../locale'
 import { arrayToEnum } from '.'
-import type { LuneErrorMap, LuneIssue } from '../error'
+import type { LuneErrorMap, LuneIssue, LuneIssueData } from '../error'
 
 
 export const LuneParsedType = arrayToEnum([
@@ -81,12 +83,13 @@ export const getParsedType = (data: any): LuneParsedType => {
 
 export interface ParseParams {
   path: ParsePath
-  errorMap: unknown // TODO: implement LuneErrorMap
+  errorMap: LuneErrorMap
   async: boolean
 }
 
 
 export type ParsePath = (string | number)[]
+
 
 export interface ParseContext {
   readonly common: {
@@ -106,6 +109,22 @@ export interface ParseInput {
   data: any
   path: ParsePath
   parent: ParseContext
+}
+
+
+export const addIssueToContext = (ctx: ParseContext, issueData: LuneIssueData): void => {
+  ctx.common.issues.push(makeIssue({
+    issueData,
+    data: ctx.data,
+    path: ctx.path,
+    errorMaps: [
+      ctx.common.contextualErrorMap,
+      ctx.schemaErrorMap,
+      getErrorMap(),
+      defaultErrorMap
+    ]
+      .filter(Boolean)
+  }))
 }
 
 
@@ -131,3 +150,88 @@ export const OK = <T>(value: T): Ok<T> => ({ status: 'valid', value })
 export type SyncParseReturnType<T = any> = Ok<T> | Dirty<T> | Invalid
 export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>
 export type ParseReturnType<T> = SyncParseReturnType<T> | AsyncParseReturnType<T>
+
+
+export const isAborted = (result: SyncParseReturnType<any>): result is Invalid =>
+  result.status === 'aborted'
+
+export const isDirty = <T>(result: SyncParseReturnType<T>): result is Dirty<T> =>
+  result.status === 'dirty'
+
+export const isValid = <T>(result: SyncParseReturnType<T>): result is Ok<T> =>
+  result.status === 'valid'
+
+export const isAsync = <T>(result: ParseReturnType<T>): result is AsyncParseReturnType<T> =>
+  result instanceof Promise
+  || (
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    typeof result !== null
+    && (typeof result === 'object' || typeof result === 'function')
+    && 'then' in result
+    && typeof result.then === 'function'
+  )
+
+
+export class ParseStatus {
+  public value: 'aborted' | 'dirty' | 'valid' = 'valid'
+
+  public dirty(): void {
+    this.value === 'valid' && (this.value = 'dirty')
+  }
+
+  public abort(): void {
+    this.value !== 'aborted' && (this.value = 'aborted')
+  }
+}
+
+
+export interface SafeParseSuccess<Output> {
+  success: true
+  data: Output
+}
+
+export interface SafeParseError<Input> {
+  success: false
+  error: LuneError<Input>
+}
+
+export type SafeParseReturnType<Input, Output> =
+  | SafeParseSuccess<Output>
+  | SafeParseError<Input>
+
+
+export const handleResult = <Input, Output>(
+  ctx: ParseContext,
+  result: SyncParseReturnType<Output>
+): SafeParseReturnType<Input, Output> => {
+  if (isValid(result)) {
+    return { success: true, data: result.value }
+  }
+
+  if (!ctx.common.issues.length) {
+    throw new Error('Validation failed but no issues detected.')
+  }
+
+  return {
+    success: false,
+    // TODO: why? performance? https://github.com/colinhacks/zod/commit/67b981e7
+    error: new LuneError<Input>(ctx.common.issues)
+  }
+}
+
+
+// export const mergeArray = (status: ParseStatus, results: SyncParseReturnType[]): SyncParseReturnType => {
+//   const valueArr: Exclude<SyncParseReturnType, Invalid>[] = [];
+//
+//   for (const result of results) {
+//     if (result.status === 'aborted')
+//       return INVALID
+//
+//     if (result.status === 'dirty')
+//       status.dirty()
+//
+//     valueArr.push(result.value)
+//   }
+//
+//   return { status: status.value, value: valueArr }
+// }

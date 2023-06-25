@@ -1,8 +1,6 @@
-import { arrayToEnum } from '../utils'
+import { arrayToEnum, Distributive, DistributiveOmitStrings } from '../utils'
 import type { LuneTypeAny, TypeOf } from '../types'
-import type { LuneParsedType } from '../utils'
-import type { ParsePath } from '../utils/parse'
-import type { OmitStrings, Primitive } from '../utils/types'
+import type { LuneParsedType, ParsePath, OmitStrings, Primitive } from '../utils'
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -259,11 +257,11 @@ export class LuneError<T = any> extends Error {
   }
 
 
-  public addIssue(this: LuneError<T>, issue: LuneIssue): void {
+  public addIssue(issue: LuneIssue): void {
     this.issues.push(issue)
   }
 
-  public addIssues(this: LuneError<T>, issues: LuneIssue[]): void {
+  public addIssues(issues: LuneIssue[]): void {
     this.issues.push(...issues)
   }
 
@@ -330,10 +328,7 @@ export class LuneError<T = any> extends Error {
 }
 
 
-type OmitPath<T extends object> = OmitStrings<T, 'path'>
-
-
-export interface LuneIssueData extends OmitPath<LuneIssueBaseData> {
+export type LuneIssueData = DistributiveOmitStrings<LuneIssueBaseData, 'path'> & {
   path?: ParsePath
   fatal?: boolean
 }
@@ -345,3 +340,39 @@ export interface LuneErrorMapCtx {
 }
 
 export type LuneErrorMap = (issue: LuneIssueBaseData, ctx: LuneErrorMapCtx) => { message: string }
+
+
+interface MakeIssueParams {
+  data: any
+  path: ParsePath
+  errorMaps: LuneErrorMap[]
+  issueData: LuneIssueData
+}
+
+
+export const makeIssue = ({
+  data,
+  path,
+  errorMaps,
+  issueData
+}: MakeIssueParams): LuneIssue => {
+  const fullPath = [...path, ...issueData.path ?? []]
+
+  let errorMessage = ''
+
+  const reversedErrorMaps = errorMaps.reverse()
+
+  for (const errorMap of reversedErrorMaps) {
+    errorMessage = errorMap(
+      { ...issueData, path: fullPath },
+      { defaultError: errorMessage, data }
+    )
+      .message
+  }
+
+  return {
+    ...issueData,
+    path: fullPath,
+    message: issueData.message ?? errorMessage
+  }
+}

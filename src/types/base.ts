@@ -1,7 +1,16 @@
 import { LuneIssueCode } from '../error'
-import { getParsedType, LuneParsedType } from '../utils'
+import {
+  getParsedType, handleResult,
+  isAsync,
+  LuneParsedType,
+  ParseStatus
+} from '../utils'
 import type { LuneErrorMap } from '../error'
-import type { ParseInput, ParseParams, ParseReturnType } from '../utils/parse'
+import type { ParseContext, ParseInput, ParseParams, ParseReturnType,
+  AsyncParseReturnType,
+  SyncParseReturnType
+  , SafeParseReturnType
+} from '../utils'
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +52,7 @@ import type { ParseInput, ParseParams, ParseReturnType } from '../utils/parse'
 
 
 export interface LuneTypeDefinition {
-  errorMap?: unknown // TODO: implement
+  errorMap?: LuneErrorMap
   description?: string
 }
 
@@ -58,15 +67,13 @@ export type Output<T extends LuneTypeAny> = TypeOf<T>
 
 // create params
 export interface RawCreateParams {
-  errorMap?: unknown // TODO: implement
+  errorMap?: LuneErrorMap
   invalid_type_error?: string
   required_error?: string
   description?: string
 }
 
-export type ProcessedCreateParams = LuneTypeDefinition
-
-export const processCreateParams = (params: RawCreateParams | undefined): ProcessedCreateParams => {
+export const processCreateParams = (params: RawCreateParams | undefined): LuneTypeDefinition => {
   if (!params) return {}
 
   const {
@@ -104,51 +111,128 @@ export const processCreateParams = (params: RawCreateParams | undefined): Proces
 }
 
 
-export abstract class LuneType<Output = any, Definition extends LuneTypeDefinition = LuneTypeDefinition, Input = Output> {
+export abstract class LuneType<
+  Output = any,
+  Definition extends LuneTypeDefinition = LuneTypeDefinition,
+  Input = Output
+> {
   // `_output` and `_input` are defined for TS usage only
   public readonly _output!: Output
   public readonly _input!: Input
 
-  readonly #definition: Definition
+  protected readonly _definition: Definition
 
 
   protected constructor(definition: Definition) {
-    this.#definition = definition
-    // TODO: implement .bind(this) (Want to see what will happen without binding)
+    this._definition = definition
+
+    this.spa = this.safeParseAsync.bind(this)
   }
 
 
   public get description(): string | undefined {
-    return this.#definition.description
+    return this._definition.description
   }
 
   protected abstract _parse(input: ParseInput): ParseReturnType<Output>
 
-  protected _getType(input: ParseInput): string {
+  protected _getType(this: void, input: ParseInput): LuneParsedType {
     return getParsedType(input.data)
   }
 
-  // TODO: _getOrReturnCtx()
+  protected _getCtx(input: ParseInput): ParseContext {
+    return {
+      common: input.parent.common,
+      data: input.data,
+      parsedType: this._getType(input.data),
+      schemaErrorMap: this._definition.errorMap,
+      path: input.path,
+      parent: input.parent
+    }
+  }
 
-  // TODO: _processInputParams()
+  private _processInputParams(input: ParseInput): { status: ParseStatus; ctx: ParseContext } {
+    return {
+      status: new ParseStatus(),
+      ctx: this._getCtx(input)
+    }
+  }
 
-  // TODO: _parseSync()
+  private _parseSync(input: ParseInput): SyncParseReturnType<Output> {
+    const result = this._parse(input)
 
-  // TODO: _parseAsync()
+    if (isAsync(result)) {
+      throw new Error('Please use ".parseAsync()" or ".safeParseAsync()" instead.')
+    }
+
+    return result
+  }
+
+  private async _parseAsync(input: ParseInput): AsyncParseReturnType<Output> {
+    return Promise.resolve(this._parse(input))
+  }
 
   public parse(data: unknown, params?: Partial<ParseParams>): Output {
-    // TODO: implement
+    const result = this.safeParse(data, params)
+
+    if (result.success)
+      return result.data
+
+    throw result.error
   }
 
-  // TODO: safeParse()
+  public safeParse(data: unknown, params?: Partial<ParseParams>): SafeParseReturnType<Input, Output> {
+    const ctx: ParseContext = {
+      common: {
+        issues: [],
+        async: params?.async ?? false,
+        contextualErrorMap: params?.errorMap
+      },
+      path: params?.path ?? [],
+      schemaErrorMap: this._definition.errorMap,
+      parent: null,
+      data,
+      parsedType: getParsedType(data)
+    }
+
+    const result = this._parseSync({ data, path: ctx.path, parent: ctx })
+
+    return handleResult(ctx, result)
+  }
 
   public async parseAsync(data: unknown, params?: Partial<ParseParams>): Promise<Output> {
-    // TODO: implement
+    const result = await this.safeParseAsync(data, params)
+
+    if (result.success)
+      return result.data
+
+    throw result.error
   }
 
-  // TODO: safeParseAsync()
+  public async safeParseAsync(data: unknown, params?: Partial<ParseParams>): Promise<SafeParseReturnType<Input, Output>> {
+    const ctx: ParseContext = {
+      common: {
+        issues: [],
+        async: params?.async ?? false,
+        contextualErrorMap: params?.errorMap
+      },
+      path: params?.path ?? [],
+      schemaErrorMap: this._definition.errorMap,
+      parent: null,
+      data,
+      parsedType: getParsedType(data)
+    }
 
-  // public spa = this.safeParseAsync
+    const _result = this._parse({ data, path: ctx.path, parent: ctx })
+
+    const result = isAsync(_result)
+      ? await _result
+      : _result
+
+    return handleResult(ctx, result)
+  }
+
+  public spa = this.safeParseAsync.bind(this)
 
   // TODO: refine()
 

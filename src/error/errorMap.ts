@@ -1,4 +1,4 @@
-import { enUS as defaultErrorMap } from '../locale'
+import { defaultErrorMap } from '../locale'
 import type { LuneErrorMap } from './error'
 
 

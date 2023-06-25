@@ -1,5 +1,7 @@
-import { LuneType, LuneFirstPartyTypeKind, processCreateParams } from './base'
+import { LuneType, processCreateParams, LuneFirstPartyTypeKind } from './base'
 import type { LuneTypeDefinition, RawCreateParams } from './base'
+import { addIssueToContext, INVALID, LuneParsedType, ParseInput, ParseReturnType, ParseStatus } from '../utils'
+import { LuneIssueCode } from '../error'
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -16,7 +18,7 @@ import type { LuneTypeDefinition, RawCreateParams } from './base'
 //         $@@L           ,,                                       @g           //
 //        $@@L            &%`                                      $@@          //
 //       g$@L             yg                                       $@@g         //
-//      ,$@F              **               LuneString              @@@@j        //
+//      ,$@F              **               LuneNumber              @@@@j        //
 //      $$@               ,gg                                     $@M$$@        //
 //     |$@F                "",                                   g$@Fl$@L       //
 //     |$@F                 #@L                                 g$@F }$@F       //
@@ -39,51 +41,63 @@ import type { LuneTypeDefinition, RawCreateParams } from './base'
 //                                                                              //
 //////////////////////////////////////////////////////////////////////////////////
 
-export type IpVersion = 'v4' | 'v6'
 
-export type LuneStringCheck = { message?: string } & (
-  | { kind: 'min'; value: number }
-  | { kind: 'max'; value: number }
-  | { kind: 'length'; value: number }
-  | { kind: 'email' }
-  | { kind: 'url' }
-  | { kind: 'emoji' }
-  | { kind: 'uuid' }
-  | { kind: 'cuid' }
-  | { kind: 'includes'; value: string; position?: number }
-  | { kind: 'cuid2' }
-  | { kind: 'ulid' }
-  | { kind: 'startsWith'; value: string }
-  | { kind: 'endsWith'; value: string }
-  | { kind: 'regex'; regex: RegExp }
-  | { kind: 'trim' }
-  | { kind: 'toLowerCase' }
-  | { kind: 'toUpperCase' }
-  | { kind: 'datetime'; offset: boolean; precision: number | null }
-  | { kind: 'ip'; version?: IpVersion }
+export type LuneNumberCheck = { message?: string } & (
+  | { kind: 'min'; value: number; inclusive: boolean }
+  | { kind: 'max'; value: number; inclusive: boolean }
+  | { kind: 'int' }
+  | { kind: 'multipleOf'; value: number }
+  | { kind: 'finite' }
 )
 
 
-export interface LuneStringDefinition extends LuneTypeDefinition {
-  checks: LuneStringCheck[]
-  typeName: typeof LuneFirstPartyTypeKind.LuneString
+export interface LuneNumberDefinition extends LuneTypeDefinition {
+  checks: LuneNumberCheck[]
+  typeName: typeof LuneFirstPartyTypeKind.LuneNumber
   coerce: boolean
 }
 
 
-export class LuneString extends LuneType<string, LuneStringDefinition> {
-  public static create(this: void, params?: RawCreateParams & { coerce?: true }): LuneString {
-    return new LuneString({
+export class LuneNumber extends LuneType<number, LuneNumberDefinition> {
+  public static create(this: void, params?: RawCreateParams & { coerce?: boolean }): LuneNumber {
+    return new LuneNumber({
       checks: [],
-      typeName: LuneFirstPartyTypeKind.LuneString,
+      typeName: LuneFirstPartyTypeKind.LuneNumber,
       coerce: params?.coerce ?? false,
       ...processCreateParams(params)
     })
   }
+
+
+  protected _parse(input: ParseInput): ParseReturnType<number> {
+    if (this._definition.coerce) {
+      input.data = Number(input.data)
+    }
+
+    // invalid type
+    if (this._getType(input) !== LuneParsedType.number) {
+      const ctx = this._getCtx(input)
+
+      addIssueToContext(ctx, {
+        code: LuneIssueCode.invalid_type,
+        expected: LuneParsedType.number,
+        received: ctx.parsedType
+      })
+
+      return INVALID
+    }
+
+
+    const status = new ParseStatus()
+
+    // TODO: implement other checks
+
+    return { status: status.value, value: input.data }
+  }
 }
 
 
-const createString = LuneString.create
+const createNumber = LuneNumber.create
 
 
-export { createString as string }
+export { createNumber as number }
